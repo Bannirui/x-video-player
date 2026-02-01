@@ -16,19 +16,19 @@ endif ()
 # Collect all cpp files in this directory
 file(GLOB TEST_SOURCES CONFIGURE_DEPENDS "*.cpp")
 
-foreach (test_src ${TEST_SOURCES})
+foreach (TEST_SRC ${TEST_SOURCES})
     # Extract file name without extension
-    get_filename_component(test_name ${test_src} NAME_WE)
+    get_filename_component(TEST_NAME ${TEST_SRC} NAME_WE)
     # Create executable
-    add_executable(${test_name} ${test_src})
+    add_executable(${TEST_NAME} ${TEST_SRC})
     # Link main library
-    target_link_libraries(${test_name} PRIVATE ${LIB_NAME})
+    target_link_libraries(${TEST_NAME} PRIVATE ${LIB_NAME})
     # 构建时触发资源文件复制
     if (TARGET copy_assets)
-        add_dependencies(${test_name} copy_assets)
+        add_dependencies(${TEST_NAME} copy_assets)
     endif ()
     # Register with CTest
-    add_test(NAME ${test_name}
-            COMMAND ${test_name}
+    add_test(NAME ${TEST_NAME}
+            COMMAND ${TEST_NAME}
     )
 endforeach ()

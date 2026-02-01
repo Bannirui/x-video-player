@@ -46,6 +46,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 # dep
 set(LIB_DIRECTORY ${CMAKE_SOURCE_DIR}/dep)
 include(${LIB_DIRECTORY}/spdlog.cmake)
+include(${LIB_DIRECTORY}/FFmpeg.cmake)
 
 set(LIB_NAME "my-video-player-core")
 

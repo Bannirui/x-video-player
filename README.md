@@ -16,3 +16,11 @@ FFmpeg+CPP
 <p align="center">
 <a href="TODO.md">Todo</a>
 </p>
+
+## 1 Requirement
+
+- Install FFmpeg
+
+  ```sh
+  sudo apt install ffmpeg libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libswresample-dev
+  ```
