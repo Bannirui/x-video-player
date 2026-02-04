@@ -8,6 +8,10 @@ extern "C" {
 #include <libavformat/avformat.h>
 }
 
+static double r2d(AVRational r) {
+    return r.den == 0 ? 0 : (double) r.num / (double) r.den;
+}
+
 int main(int argc, char **argv) {
     XLog::Init();
 
@@ -36,6 +40,24 @@ int main(int argc, char **argv) {
     XLOG_INFO("total {}ms", total);
     // mp4 info
     av_dump_format(context, 0, path, 0);
+
+    for (uint32_t i = 0; i < context->nb_streams; ++i) {
+        AVStream *stream = context->streams[i];
+        if (stream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+            XLOG_INFO("audio, i={}", i);
+            XLOG_INFO("sample rate={}", stream->codecpar->sample_rate);
+            XLOG_INFO("channels={}", stream->codecpar->channels);
+            XLOG_INFO("audio fps={}", r2d(stream->avg_frame_rate));
+        } else if (stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+            XLOG_INFO("video, i={}", i);
+            XLOG_INFO("width={}", stream->codecpar->width);
+            XLOG_INFO("height={}", stream->codecpar->height);
+            XLOG_INFO("video fps={}", r2d(stream->avg_frame_rate));
+        }
+        XLOG_INFO("format={}", stream->codecpar->format);
+        XLOG_INFO("codec id={}", static_cast<int>(stream->codecpar->codec_id));
+    }
+
     if (context) {
         // free the context and then assign content nullptr
         avformat_close_input(&context);
