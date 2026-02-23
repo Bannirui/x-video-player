@@ -16,7 +16,7 @@ static double r2d(AVRational r)
     return r.den == 0 ? 0 : (double)r.num / (double)r.den;
 }
 
-int main(int argc, char **argv)
+int main()
 {
     XLog::Init();
 
@@ -45,8 +45,8 @@ int main(int argc, char **argv)
     // mp4 info
     av_dump_format(context, 0, path.c_str(), 0);
 
-    uint32_t videoStreamIndex = 0;
-    uint32_t audioStreamIndex = 1;
+    int videoStreamIndex = 0;
+    int audioStreamIndex = 1;
     for (uint32_t i = 0; i < context->nb_streams; ++i)
     {
         AVStream *stream = context->streams[i];
@@ -71,8 +71,38 @@ int main(int argc, char **argv)
     }
     XLOG_INFO("audio index={}, video index={}", audioStreamIndex, videoStreamIndex);
 
+    // video stream
+    audioStreamIndex = av_find_best_stream(context, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
     videoStreamIndex = av_find_best_stream(context, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
-    XLOG_INFO("video index={}", videoStreamIndex);
+    XLOG_INFO("audio index={}, video index={}", audioStreamIndex, videoStreamIndex);
+
+    // read
+    AVPacket *pkt = av_packet_alloc();
+    for (;;)
+    {
+        if (av_read_frame(context, pkt) != 0)
+        {
+            // replay when end
+            XLOG_INFO("the end");
+            int       ms  = 3000;
+            long long pos = ((double)ms / 1000) * r2d(context->streams[pkt->stream_index]->time_base);
+            av_seek_frame(context, videoStreamIndex, pos, AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG_FRAME);
+            continue;
+        }
+        XLOG_INFO("read, packet size={}, pts={} dts={}", pkt->size, pkt->pts, pkt->dts);
+        XLOG_INFO("pkt ms={}", pkt->pts * (r2d(context->streams[pkt->stream_index]->time_base) * 1000));
+        if (pkt->stream_index == audioStreamIndex)
+        {
+            XLOG_INFO("this frame is audio");
+        }
+        else if (pkt->stream_index == videoStreamIndex)
+        {
+            XLOG_INFO("this frame is image");
+        }
+        // decrease ref, free when ref equals 0
+        av_packet_unref(pkt);
+    }
+    av_packet_free(&pkt);
 
     if (context)
     {
