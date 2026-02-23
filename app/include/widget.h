@@ -2,11 +2,13 @@
 
 #include <QWidget>
 
-namespace Ui {
+namespace Ui
+{
     class Widget;
 }
 
-class Widget : public QWidget {
+class Widget : public QWidget
+{
     Q_OBJECT
 
 public:
