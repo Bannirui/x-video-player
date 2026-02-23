@@ -4,10 +4,18 @@
 
 #include "x_log.h"
 
-std::shared_ptr<spdlog::logger> XLog::logger;
+#include "spdlog/sinks/stdout_color_sinks.h"
 
-void XLog::Init() {
-    spdlog::set_pattern("%^[%T] %n: %v%$");
-    logger = spdlog::stdout_color_mt("X_LOG");
-    logger->set_level(spdlog::level::trace);
+std::shared_ptr<spdlog::logger> XLog::m_logger;
+
+void XLog::Init()
+{
+    if (m_logger)
+    {
+        return;
+    }
+    auto sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    m_logger = std::make_shared<spdlog::logger>("x-video-player", sink);
+    m_logger->set_pattern("%^[%T] [%l] %n: %v%$");
+    m_logger->set_level(spdlog::level::trace);
 }
