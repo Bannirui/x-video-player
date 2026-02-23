@@ -2,7 +2,7 @@
 // Created by dingrui on 2/1/26.
 //
 
-#include "../include/x_video_player/x_log.h"
+#include "x_video_player/x_log.h"
 
 extern "C" {
 #include <libavformat/avformat.h>

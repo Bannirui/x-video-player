@@ -30,6 +30,10 @@ add_executable(${PROJECT_NAME}
         ${RESOURCES}
 )
 
+target_include_directories(${PROJECT_NAME}
+    PRIVATE ${HDR_DIR}
+)
+
 target_link_libraries(${PROJECT_NAME}
         PRIVATE
             Qt${QT_VERSION_MAJOR}::Widgets

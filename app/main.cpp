@@ -4,7 +4,7 @@
 
 #include <QApplication>
 
-#include "include/widget.h"
+#include "widget.h"
 
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
