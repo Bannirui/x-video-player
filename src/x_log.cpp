@@ -2,9 +2,9 @@
 // Created by rui ding on 2025/9/12.
 //
 
-#include "x_log.h"
+#include "x_video_player/x_log.h"
 
-#include "spdlog/sinks/stdout_color_sinks.h"
+#include <spdlog/sinks/stdout_color_sinks.h>
 
 std::shared_ptr<spdlog::logger> XLog::m_logger;
 
