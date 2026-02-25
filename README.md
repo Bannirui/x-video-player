@@ -24,3 +24,13 @@ FFmpeg+CPP
   ```sh
   sudo apt install ffmpeg libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libswresample-dev
   ```
+
+- Install Qt
+  
+  ```sh
+  sudo apt install qtmultimedia5-dev
+  ```
+  
+```shell
+fmpeg -i Python.mp4 -f s16le Python.pcm
+```

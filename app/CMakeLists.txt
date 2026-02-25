@@ -32,9 +32,11 @@ target_include_directories(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME}
+        PRIVATE ${LIB_NAME}
         PRIVATE
+            Qt${QT_VERSION_MAJOR}::Core
             Qt${QT_VERSION_MAJOR}::Widgets
-            ${LIB_NAME}
+            Qt${QT_VERSION_MAJOR}::Multimedia
 )
 
 # 构建时触发资源文件复制
