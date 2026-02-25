@@ -124,7 +124,8 @@ int main()
     XLOG_INFO("audio codec open succ");
 
     // read
-    AVPacket *pkt = av_packet_alloc();
+    AVPacket *pkt   = av_packet_alloc();
+    AVFrame  *frame = av_frame_alloc();
     for (;;)
     {
         if (av_read_frame(context, pkt) != 0)
@@ -138,17 +139,40 @@ int main()
         }
         XLOG_INFO("read, packet size={}, pts={} dts={}", pkt->size, pkt->pts, pkt->dts);
         XLOG_INFO("pkt ms={}", pkt->pts * (r2d(context->streams[pkt->stream_index]->time_base) * 1000));
+        AVCodecContext *avCodecCtx = nullptr;
         if (pkt->stream_index == audioStreamIndex)
         {
             XLOG_INFO("this frame is audio");
+            avCodecCtx = aCodecCtx;
         }
         else if (pkt->stream_index == videoStreamIndex)
         {
             XLOG_INFO("this frame is image");
+            avCodecCtx = vCodecCtx;
         }
+        // decode, send packet to according thread, time free(no cpu)
+        ret = avcodec_send_packet(avCodecCtx, pkt);
         // decrease ref, free when ref equals 0
         av_packet_unref(pkt);
+        if (ret != 0)
+        {
+            char buf[1024] = {0};
+            av_strerror(ret, buf, sizeof(buf) - 1);
+            XLOG_ERROR("av codec send failed: {}", buf);
+            continue;
+        }
+        // get decode result from thread, time free(no cpu), send to recv maybe 1:n
+        for (;;)
+        {
+            ret = avcodec_receive_frame(avCodecCtx, frame);
+            if (ret != 0)
+            {
+                break;
+            }
+            XLOG_INFO("recv frame, format {0}, line size {1}", frame->format, frame->linesize[0]);
+        }
     }
+    av_frame_free(&frame);
     av_packet_free(&pkt);
 
     if (context)
