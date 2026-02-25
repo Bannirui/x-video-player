@@ -1,14 +1,9 @@
-//
-// Created by dingrui on 2/1/26.
-//
-
-#include "x_video_player/x_log.h"
-
-#include <string>
+#include "x.h"
 
 extern "C"
 {
 #include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>
 }
 
 static double r2d(AVRational r)
@@ -20,7 +15,9 @@ int main()
 {
     XLog::Init();
 
+    // init network lib, modern ffmpeg no need registering manually
     avformat_network_init();
+
     AVFormatContext *context = nullptr;
     std::string      path("asset/Python.mp4");
     AVDictionary    *opts = nullptr;
@@ -75,6 +72,56 @@ int main()
     audioStreamIndex = av_find_best_stream(context, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
     videoStreamIndex = av_find_best_stream(context, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
     XLOG_INFO("audio index={}, video index={}", audioStreamIndex, videoStreamIndex);
+
+    // video codec
+    const AVCodec *vCodec = avcodec_find_decoder(context->streams[videoStreamIndex]->codecpar->codec_id);
+    if (!vCodec)
+    {
+        XLOG_ERROR("cannot find video decoder");
+        return -1;
+    }
+    XLOG_INFO("find the video codec context, {}", (int)(context->streams[videoStreamIndex]->codecpar->codec_id));
+    // create codec context
+    AVCodecContext *vCodecCtx = avcodec_alloc_context3(vCodec);
+    // copy codec-context parameters
+    avcodec_parameters_to_context(vCodecCtx, context->streams[videoStreamIndex]->codecpar);
+    // threads
+    vCodecCtx->thread_count = 8;
+    // open codec-context
+    ret = avcodec_open2(vCodecCtx, 0, 0);
+    if (ret != 0)
+    {
+        char buf[1024] = {0};
+        av_strerror(ret, buf, sizeof(buf) - 1);
+        XLOG_ERROR("avcodec_open2 failed: {}", buf);
+        return -1;
+    }
+    XLOG_INFO("video codec open succ");
+
+    // audio codec
+    const AVCodec *aCodec = avcodec_find_decoder(context->streams[audioStreamIndex]->codecpar->codec_id);
+    if (!aCodec)
+    {
+        XLOG_ERROR("cannot find audio decoder");
+        return -1;
+    }
+    XLOG_INFO("find the audio codec context, {}", (int)(context->streams[audioStreamIndex]->codecpar->codec_id));
+    // create codec context
+    AVCodecContext *aCodecCtx = avcodec_alloc_context3(aCodec);
+    // copy codec-context parameters
+    avcodec_parameters_to_context(aCodecCtx, context->streams[audioStreamIndex]->codecpar);
+    // threads
+    aCodecCtx->thread_count = 8;
+    // open codec-context
+    ret = avcodec_open2(aCodecCtx, 0, 0);
+    if (ret != 0)
+    {
+        char buf[1024] = {0};
+        av_strerror(ret, buf, sizeof(buf) - 1);
+        XLOG_ERROR("avcodec_open2 failed: {}", buf);
+        return -1;
+    }
+    XLOG_INFO("audio codec open succ");
 
     // read
     AVPacket *pkt = av_packet_alloc();

@@ -6,7 +6,7 @@
 
 #include "widget.h"
 
-#include "x_video_player/x_log.h"
+#include "../x_video_player/src/x/x_log.h"
 
 int main(int argc, char *argv[]) {
     XLog::Init();

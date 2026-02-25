@@ -1,7 +1,7 @@
 #include "widget.h"
 #include "ui_widget.h"
 
-#include "x_video_player/x_log.h"
+#include "../../x_video_player/src/x/x_log.h"
 
 Widget::Widget(QWidget *parent) : QWidget(parent), ui(new Ui::Widget)
 {

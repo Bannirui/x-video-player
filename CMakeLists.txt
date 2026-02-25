@@ -35,9 +35,9 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-set(LIB_NAME "my-video-player-core")
+set(LIB_NAME "${PROJECT_NAME}-core")
 
-add_subdirectory(src)
+add_subdirectory(x_video_player)
 add_subdirectory(app)
 include(CTest)
 enable_testing()
