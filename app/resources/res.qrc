@@ -1,16 +1,4 @@
 <RCC>
     <qresource prefix="/">
-        <file>icons/logo.png</file>
-        <file>icons/add-1.png</file>
-        <file>icons/add-2.png</file>
-        <file>icons/close-1.png</file>
-        <file>icons/close-2.png</file>
-        <file>icons/open-1.png</file>
-        <file>icons/open-2.png</file>
-        <file>icons/save-1.png</file>
-        <file>icons/save-2.png</file>
-        <file>icons/add-3.png</file>
-        <file>icons/close-3.png</file>
-        <file>icons/save-3.png</file>
     </qresource>
 </RCC>

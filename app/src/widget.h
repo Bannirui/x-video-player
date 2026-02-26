@@ -20,10 +20,8 @@ public:
     void SetupConnections();
 
 signals:
-    void ViewSig();
 
 public slots:
-    void ViewSlot();
 
 private:
     Ui::Widget *ui;

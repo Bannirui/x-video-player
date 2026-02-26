@@ -32,5 +32,6 @@ FFmpeg+CPP
   ```
   
 ```shell
-fmpeg -i Python.mp4 -f s16le Python.pcm
+ffmpeg -i Python.mp4 -f s16le Python.pcm
+ffmpeg -i Python.mp4 -t 10 -s 240x128 -pix_fmt yuv420p Python.yuv
 ```
