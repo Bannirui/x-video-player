@@ -8,21 +8,22 @@
 #include <QTimer>
 
 // add "" for string, x=>"x"
-#define GET_STR(x) #x
+#define GLSL_VERSION "#version 450 core\n"
+#define GLSL(src) GLSL_VERSION #src
 
 // clang-format off
-const char *kVertexShader = GET_STR(
+const char *kVertexShader = GLSL(
     layout(location = 0) in vec3 a_pos;
     layout(location = 1) in vec2 a_uv;
-    out vec2 o_uv;
+    out vec2 v_uv;
     void main() {
         gl_Position = vec4(a_pos, 1.0);
-        o_uv = a_uv;
+        v_uv = a_uv;
     }
 );
 
-const char *kFragmentShader = GET_STR(
-    in vec2 i_uv;
+const char *kFragmentShader = GLSL(
+    in vec2 v_uv;
     out vec4 FragColor;
     uniform sampler2D u_texY;
     uniform sampler2D u_texU;
@@ -30,9 +31,9 @@ const char *kFragmentShader = GET_STR(
     void main() {
         vec3 yuv;
         vec3 rgb;
-        yuv.x        = texture(u_texY, i_uv).r;
-        yuv.y        = texture(u_texU, i_uv).r - 0.5;
-        yuv.z        = texture(u_texV, i_uv).r - 0.5;
+        yuv.x        = texture(u_texY, v_uv).r;
+        yuv.y        = texture(u_texU, v_uv).r - 0.5;
+        yuv.z        = texture(u_texV, v_uv).r - 0.5;
         rgb          = mat3(
             1.0, 1.0, 1.0,
             0.0, -0.39465, 2.03211,
