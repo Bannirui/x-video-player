@@ -9,6 +9,7 @@
 extern "C"
 {
 #include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>
 }
 
 static double r2d(AVRational r)
@@ -75,4 +76,28 @@ bool Demux::Open(const std::string &url)
 
     m_mutex.unlock();
     return true;
+}
+
+AVPacket *Demux::Read()
+{
+    m_mutex.lock();
+    if (!m_avContext)
+    {
+        m_mutex.unlock();
+        return nullptr;
+    }
+    AVPacket *pkt = av_packet_alloc();
+    int       ret = av_read_frame(m_avContext, pkt);
+    if (ret < 0)
+    {
+        m_mutex.unlock();
+        av_packet_free(&pkt);
+        return nullptr;
+    }
+    // pts->ms
+    pkt->pts = pkt->pts * (1000 * (r2d(m_avContext->streams[pkt->stream_index]->time_base)));
+    pkt->dts = pkt->dts * (1000 * (r2d(m_avContext->streams[pkt->stream_index]->time_base)));
+    XLOG_INFO("pts:{}, dts:{}", pkt->pts, pkt->dts);
+    m_mutex.unlock();
+    return pkt;
 }

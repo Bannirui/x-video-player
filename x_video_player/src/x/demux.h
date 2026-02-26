@@ -7,6 +7,7 @@
 #include "pch.h"
 
 struct AVFormatContext;
+struct AVPacket;
 
 class Demux
 {
@@ -18,6 +19,8 @@ public:
      * @param url media file path
      */
     virtual bool Open(const std::string &url);
+    // read frame, caller free AVPacket object, av_paket_free
+    virtual AVPacket *Read();
 
 protected:
     AVFormatContext *m_avContext{nullptr};

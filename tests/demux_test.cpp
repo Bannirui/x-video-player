@@ -13,5 +13,13 @@ int main()
     std::string path = "asset/Python.mp4";
     bool        ret  = demux.Open(path);
     XLOG_INFO("ret: {0}", ret);
+    for (;;)
+    {
+        AVPacket *pkt = demux.Read();
+        if (!pkt)
+        {
+            break;
+        }
+    }
     return 0;
 }
