@@ -10,6 +10,7 @@ extern "C"
 {
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
+#include <libavcodec/codec_par.h>
 }
 
 static double r2d(AVRational r)
@@ -100,4 +101,32 @@ AVPacket *Demux::Read()
     XLOG_INFO("pts:{}, dts:{}", pkt->pts, pkt->dts);
     m_mutex.unlock();
     return pkt;
+}
+
+AVCodecParameters *Demux::CopyAPara()
+{
+    m_mutex.lock();
+    if (!m_avContext)
+    {
+        m_mutex.unlock();
+        return nullptr;
+    }
+    AVCodecParameters *ret = avcodec_parameters_alloc();
+    avcodec_parameters_copy(ret, m_avContext->streams[m_aStream]->codecpar);
+    m_mutex.unlock();
+    return ret;
+}
+
+AVCodecParameters *Demux::CopyVPara()
+{
+    m_mutex.lock();
+    if (!m_avContext)
+    {
+        m_mutex.unlock();
+        return nullptr;
+    }
+    AVCodecParameters *ret = avcodec_parameters_alloc();
+    avcodec_parameters_copy(ret, m_avContext->streams[m_vStream]->codecpar);
+    m_mutex.unlock();
+    return ret;
 }

@@ -8,6 +8,7 @@
 
 struct AVFormatContext;
 struct AVPacket;
+struct AVCodecParameters;
 
 class Demux
 {
@@ -21,6 +22,10 @@ public:
     virtual bool Open(const std::string &url);
     // read frame, caller free AVPacket object, av_paket_free
     virtual AVPacket *Read();
+
+    // audio/video parameter, memory need be freed, call avcodec_parameters_free
+    AVCodecParameters *CopyAPara();
+    AVCodecParameters *CopyVPara();
 
 protected:
     AVFormatContext *m_avContext{nullptr};
