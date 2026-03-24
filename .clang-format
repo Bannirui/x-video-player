@@ -12,16 +12,45 @@ AllowShortFunctionsOnASingleLine: Inline
 AllowShortIfStatementsOnASingleLine: true
 # 大括号换行风格
 BreakBeforeBraces: Allman
-# left=int* ptr and right=int *ptr
-PointerAlignment: Right
+# 指针和引用符号
+# left=int* ptr
+# right=int *ptr
+PointerAlignment: Left
 SpacesInAngles: false
 SpaceBeforeParens: ControlStatements
 # 命名空间内缩进
 NamespaceIndentation: All
-# 自动排序include语句 有些依赖必须严格顺序否则会出错比如glad和glfw
-SortIncludes: false
-# regroup 并合并相同模块的 include
+# 自动排序include语句 有些依赖必须严格顺序否则会出错
+# glad在glfw前面
+# imgui在ImGuizmo前面
+SortIncludes: CaseInsensitive
+# regroup 并合并相同模块的include
 IncludeBlocks: Regroup
+IncludeCategories:
+  # project headers
+  - Regex: '^"'
+    Priority: 1
+  # glad must always be first among graphics libs
+  - Regex: '^<glad/'
+    Priority: 2
+  # glfw must come after glad
+  - Regex: '^<GLFW/'
+    Priority: 3
+  # ImGuizmo must be after imgui, imgui+imguizmo together
+  - Regex: '^<imgui/'
+    Priority: 4
+  - Regex: '^<ImGuizmo/'
+    Priority: 5
+  # major third-party libraries
+  - Regex: '^<(entt|glm|vulkan|spdlog|stb|fmt)/'
+    Priority: 6
+  # other third-party
+  - Regex: '^<[^/]+/'
+    Priority: 7
+  # system headers
+  - Regex: '^<.*>'
+    Priority: 8
+
 # 自动换行注释
 ReflowComments: true
 AlignConsecutiveAssignments: true
@@ -32,3 +61,26 @@ FixNamespaceComments: true
 CommentPragmas: '^ IWYU pragma:'
 # public/protected/private缩进
 AccessModifierOffset: -4
+
+# 宏定义体缩进
+# None 永远顶格
+# BeforeHash #include随代码块缩进
+# AfterHash #跟关键字会分开
+IndentPPDirectives: BeforeHash
+
+# 宏内部是否缩进
+IndentWrappedFunctionNames: false
+# 多行宏的反斜杠对齐
+AlignEscapedNewlines: Left
+# 允许宏内保持结构
+AllowShortBlocksOnASingleLine: Never
+# 避免宏被自动压缩
+AllowShortLambdasOnASingleLine: None
+# 保持宏展开结构
+KeepEmptyLinesAtTheStartOfBlocks: false
+
+# 函数/类/struct 定义之间自动空一行
+# Leave-保持原样
+# Always-自动加空行
+# Never-自动删除空行
+SeparateDefinitionBlocks: Always
