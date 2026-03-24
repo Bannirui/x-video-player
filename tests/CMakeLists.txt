@@ -21,6 +21,8 @@ foreach (TEST_SRC ${TEST_SOURCES})
     get_filename_component(TEST_NAME ${TEST_SRC} NAME_WE)
     # Create executable
     add_executable(${TEST_NAME} ${TEST_SRC})
+    # ffmpeg用cpp编译时可能会缺少宏 添加宏时不要污染全局
+    target_compile_definitions(${TEST_NAME} PRIVATE __STDC_CONSTANT_MACROS)
     # Link main library
     target_link_libraries(${TEST_NAME}
             PRIVATE ${LIB_NAME}
