@@ -28,9 +28,13 @@ FFmpeg+CPP
 - Install Qt
   
   ```sh
-  sudo apt install qtmultimedia5-dev
+  sudo apt install -y build-essential qtbase5-dev
   ```
   
+  - 视频播放`sudo apt install qtmultimedia5-dev`
+  
+## 2 素材准备
+
 ```shell
 ffmpeg -i Python.mp4 -f s16le Python.pcm
 ffmpeg -i Python.mp4 -t 10 -s 240x128 -pix_fmt yuv420p Python.yuv
