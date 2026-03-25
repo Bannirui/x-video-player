@@ -22,13 +22,19 @@ FFmpeg+CPP
 - Install FFmpeg
 
   ```sh
-  sudo apt install ffmpeg \libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libswresample-dev
+  sudo apt install ffmpeg \
+  libavcodec-dev \
+  libavformat-dev \
+  libavutil-dev \
+  libswscale-dev \
+  libswresample-dev
   ```
 
 - Install Qt
   
   ```sh
-  sudo apt install -y build-essential qtbase5-dev
+  sudo apt install -y build-essential \
+  qtbase5-dev
   ```
   
   - 视频播放`sudo apt install qtmultimedia5-dev`
