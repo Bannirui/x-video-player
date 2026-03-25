@@ -8,9 +8,9 @@
 
 extern "C"
 {
-#include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
 #include <libavcodec/codec_par.h>
+#include <libavformat/avformat.h>
 }
 
 static double r2d(AVRational r)
@@ -33,9 +33,9 @@ Demux::Demux()
 
 Demux::~Demux() {}
 
-bool Demux::Open(const std::string &url)
+bool Demux::Open(const std::string& url)
 {
-    AVDictionary *opts = nullptr;
+    AVDictionary* opts = nullptr;
     av_dict_set(&opts, "rtsp_transport", "tcp", 0);
     av_dict_set(&opts, "max_delay", "500", 0);
 
@@ -65,12 +65,12 @@ bool Demux::Open(const std::string &url)
     m_vStream = av_find_best_stream(m_avContext, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
     XLOG_INFO("audio index={}, video index={}", m_aStream, m_vStream);
 
-    AVStream *aStream = m_avContext->streams[m_aStream];
+    AVStream* aStream = m_avContext->streams[m_aStream];
     XLOG_INFO("audio, stream:{0}, sample rate:{1}, channels:{2}, fps:{3}, format:{4}, codec:{5}", aStream->id,
               aStream->codecpar->sample_rate, aStream->codecpar->channels, r2d(aStream->avg_frame_rate),
               aStream->codecpar->format, static_cast<int>(aStream->codecpar->codec_id));
 
-    AVStream *vStream = m_avContext->streams[m_vStream];
+    AVStream* vStream = m_avContext->streams[m_vStream];
     XLOG_INFO("video, stream:{0}, width:{1}, height:{2}, fps:{3}, format:{4}, codec:{5}", vStream->id,
               vStream->codecpar->width, vStream->codecpar->height, r2d(vStream->avg_frame_rate),
               vStream->codecpar->format, static_cast<int>(vStream->codecpar->codec_id));
@@ -79,7 +79,7 @@ bool Demux::Open(const std::string &url)
     return true;
 }
 
-AVPacket *Demux::Read()
+AVPacket* Demux::Read()
 {
     m_mutex.lock();
     if (!m_avContext)
@@ -87,7 +87,7 @@ AVPacket *Demux::Read()
         m_mutex.unlock();
         return nullptr;
     }
-    AVPacket *pkt = av_packet_alloc();
+    AVPacket* pkt = av_packet_alloc();
     int       ret = av_read_frame(m_avContext, pkt);
     if (ret < 0)
     {
@@ -103,7 +103,7 @@ AVPacket *Demux::Read()
     return pkt;
 }
 
-AVCodecParameters *Demux::CopyAPara()
+AVCodecParameters* Demux::CopyAPara()
 {
     m_mutex.lock();
     if (!m_avContext)
@@ -111,13 +111,13 @@ AVCodecParameters *Demux::CopyAPara()
         m_mutex.unlock();
         return nullptr;
     }
-    AVCodecParameters *ret = avcodec_parameters_alloc();
+    AVCodecParameters* ret = avcodec_parameters_alloc();
     avcodec_parameters_copy(ret, m_avContext->streams[m_aStream]->codecpar);
     m_mutex.unlock();
     return ret;
 }
 
-AVCodecParameters *Demux::CopyVPara()
+AVCodecParameters* Demux::CopyVPara()
 {
     m_mutex.lock();
     if (!m_avContext)
@@ -125,7 +125,7 @@ AVCodecParameters *Demux::CopyVPara()
         m_mutex.unlock();
         return nullptr;
     }
-    AVCodecParameters *ret = avcodec_parameters_alloc();
+    AVCodecParameters* ret = avcodec_parameters_alloc();
     avcodec_parameters_copy(ret, m_avContext->streams[m_vStream]->codecpar);
     m_mutex.unlock();
     return ret;

@@ -19,16 +19,16 @@ public:
     /**
      * @param url media file path
      */
-    virtual bool Open(const std::string &url);
+    virtual bool Open(const std::string& url);
     // read frame, caller free AVPacket object, av_paket_free
-    virtual AVPacket *Read();
+    virtual AVPacket* Read();
 
     // audio/video parameter, memory need be freed, call avcodec_parameters_free
-    AVCodecParameters *CopyAPara();
-    AVCodecParameters *CopyVPara();
+    AVCodecParameters* CopyAPara();
+    AVCodecParameters* CopyVPara();
 
 protected:
-    AVFormatContext *m_avContext{nullptr};
+    AVFormatContext* m_avContext{nullptr};
     int              m_aStream{0};
     int              m_vStream{0};
     int              m_totalMs{0};

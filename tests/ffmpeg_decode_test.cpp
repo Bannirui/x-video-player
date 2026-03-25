@@ -2,8 +2,8 @@
 
 extern "C"
 {
-#include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
 }
 
 static double r2d(AVRational r)
@@ -18,9 +18,9 @@ int main()
     // init network lib, modern ffmpeg no need registering manually
     avformat_network_init();
 
-    AVFormatContext *context = nullptr;
+    AVFormatContext* context = nullptr;
     std::string      path("asset/Python.mp4");
-    AVDictionary    *opts = nullptr;
+    AVDictionary*    opts = nullptr;
     av_dict_set(&opts, "rtsp_transport", "tcp", 0);
     av_dict_set(&opts, "max_delay", "500", 0);
     int ret = avformat_open_input(&context, path.c_str(),
@@ -46,7 +46,7 @@ int main()
     int audioStreamIndex = 1;
     for (uint32_t i = 0; i < context->nb_streams; ++i)
     {
-        AVStream *stream = context->streams[i];
+        AVStream* stream = context->streams[i];
         if (stream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO)
         {
             audioStreamIndex = i;
@@ -74,7 +74,7 @@ int main()
     XLOG_INFO("audio index={}, video index={}", audioStreamIndex, videoStreamIndex);
 
     // video codec
-    const AVCodec *vCodec = avcodec_find_decoder(context->streams[videoStreamIndex]->codecpar->codec_id);
+    const AVCodec* vCodec = avcodec_find_decoder(context->streams[videoStreamIndex]->codecpar->codec_id);
     if (!vCodec)
     {
         XLOG_ERROR("cannot find video decoder");
@@ -82,7 +82,7 @@ int main()
     }
     XLOG_INFO("find the video codec context, {}", (int)(context->streams[videoStreamIndex]->codecpar->codec_id));
     // create codec context
-    AVCodecContext *vCodecCtx = avcodec_alloc_context3(vCodec);
+    AVCodecContext* vCodecCtx = avcodec_alloc_context3(vCodec);
     // copy codec-context parameters
     avcodec_parameters_to_context(vCodecCtx, context->streams[videoStreamIndex]->codecpar);
     // threads
@@ -99,7 +99,7 @@ int main()
     XLOG_INFO("video codec open succ");
 
     // audio codec
-    const AVCodec *aCodec = avcodec_find_decoder(context->streams[audioStreamIndex]->codecpar->codec_id);
+    const AVCodec* aCodec = avcodec_find_decoder(context->streams[audioStreamIndex]->codecpar->codec_id);
     if (!aCodec)
     {
         XLOG_ERROR("cannot find audio decoder");
@@ -107,7 +107,7 @@ int main()
     }
     XLOG_INFO("find the audio codec context, {}", (int)(context->streams[audioStreamIndex]->codecpar->codec_id));
     // create codec context
-    AVCodecContext *aCodecCtx = avcodec_alloc_context3(aCodec);
+    AVCodecContext* aCodecCtx = avcodec_alloc_context3(aCodec);
     // copy codec-context parameters
     avcodec_parameters_to_context(aCodecCtx, context->streams[audioStreamIndex]->codecpar);
     // threads
@@ -124,8 +124,8 @@ int main()
     XLOG_INFO("audio codec open succ");
 
     // read
-    AVPacket *pkt   = av_packet_alloc();
-    AVFrame  *frame = av_frame_alloc();
+    AVPacket* pkt   = av_packet_alloc();
+    AVFrame*  frame = av_frame_alloc();
     for (;;)
     {
         if (av_read_frame(context, pkt) != 0)
@@ -139,7 +139,7 @@ int main()
         }
         XLOG_INFO("read, packet size={}, pts={} dts={}", pkt->size, pkt->pts, pkt->dts);
         XLOG_INFO("pkt ms={}", pkt->pts * (r2d(context->streams[pkt->stream_index]->time_base) * 1000));
-        AVCodecContext *avCodecCtx = nullptr;
+        AVCodecContext* avCodecCtx = nullptr;
         if (pkt->stream_index == audioStreamIndex)
         {
             XLOG_INFO("this frame is audio");
