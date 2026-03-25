@@ -22,7 +22,7 @@ FFmpeg+CPP
 - Install FFmpeg
 
   ```sh
-  sudo apt install ffmpeg libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libswresample-dev
+  sudo apt install ffmpeg \libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libswresample-dev
   ```
 
 - Install Qt
