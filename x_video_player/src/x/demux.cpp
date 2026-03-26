@@ -6,25 +6,21 @@
 
 #include "x/x_log.h"
 
-extern "C"
-{
+extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavcodec/codec_par.h>
 #include <libavformat/avformat.h>
 }
 
-static double r2d(AVRational r)
-{
+static double r2d(AVRational r) {
     return r.den == 0 ? 0 : (double)r.num / (double)r.den;
 }
 
-Demux::Demux()
-{
-    static bool       s_initialized = false;
+Demux::Demux() {
+    static bool s_initialized = false;
     static std::mutex s_mutex;
     s_mutex.lock();
-    if (!s_initialized)
-    {
+    if (!s_initialized) {
         avformat_network_init();
         s_initialized = true;
     }
@@ -33,8 +29,7 @@ Demux::Demux()
 
 Demux::~Demux() {}
 
-bool Demux::Open(const std::string& url)
-{
+bool Demux::Open(const std::string& url) {
     AVDictionary* opts = nullptr;
     av_dict_set(&opts, "rtsp_transport", "tcp", 0);
     av_dict_set(&opts, "max_delay", "500", 0);
@@ -44,8 +39,7 @@ bool Demux::Open(const std::string& url)
                                   0,     // select codec automatically
                                   &opts  // options, like rtsp delay duration
     );
-    if (ret != 0)
-    {
+    if (ret != 0) {
         m_mutex.unlock();
         char buf[1024] = {0};
         av_strerror(ret, buf, sizeof(buf) - 1);
@@ -79,18 +73,15 @@ bool Demux::Open(const std::string& url)
     return true;
 }
 
-AVPacket* Demux::Read()
-{
+AVPacket* Demux::Read() {
     m_mutex.lock();
-    if (!m_avContext)
-    {
+    if (!m_avContext) {
         m_mutex.unlock();
         return nullptr;
     }
     AVPacket* pkt = av_packet_alloc();
-    int       ret = av_read_frame(m_avContext, pkt);
-    if (ret < 0)
-    {
+    int ret = av_read_frame(m_avContext, pkt);
+    if (ret < 0) {
         m_mutex.unlock();
         av_packet_free(&pkt);
         return nullptr;
@@ -103,11 +94,9 @@ AVPacket* Demux::Read()
     return pkt;
 }
 
-AVCodecParameters* Demux::CopyAPara()
-{
+AVCodecParameters* Demux::CopyAPara() {
     m_mutex.lock();
-    if (!m_avContext)
-    {
+    if (!m_avContext) {
         m_mutex.unlock();
         return nullptr;
     }
@@ -117,11 +106,9 @@ AVCodecParameters* Demux::CopyAPara()
     return ret;
 }
 
-AVCodecParameters* Demux::CopyVPara()
-{
+AVCodecParameters* Demux::CopyVPara() {
     m_mutex.lock();
-    if (!m_avContext)
-    {
+    if (!m_avContext) {
         m_mutex.unlock();
         return nullptr;
     }

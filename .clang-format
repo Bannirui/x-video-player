@@ -8,10 +8,16 @@ TabWidth: 4
 UseTab: Never
 # 每行字符数限制
 ColumnLimit: 120
-AllowShortFunctionsOnASingleLine: Inline
+
+# 控制语句风格
 AllowShortIfStatementsOnASingleLine: true
-# 大括号换行风格
-BreakBeforeBraces: Allman
+# 函数
+AllowShortFunctionsOnASingleLine: Empty
+# lambda None=避免被压缩 避免宏被压缩 Inline=可能会被压缩
+AllowShortLambdasOnASingleLine: None
+
+# 大括号换行风格 Attach=K&R大括号不换行风格 Allman=大括号换行风格
+BreakBeforeBraces: Attach
 # 指针和引用符号
 # left=int* ptr
 # right=int *ptr
@@ -53,12 +59,15 @@ IncludeCategories:
 
 # 自动换行注释
 ReflowComments: true
-AlignConsecutiveAssignments: true
-AlignConsecutiveDeclarations: true
-DerivePointerAlignment: false
-FixNamespaceComments: true
 # 自动注释未封闭的命名空间
 CommentPragmas: '^ IWYU pragma:'
+
+# 对齐 适度就行 避免过度表格化
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+
+DerivePointerAlignment: false
+FixNamespaceComments: true
 # public/protected/private缩进
 AccessModifierOffset: -4
 
@@ -74,8 +83,6 @@ IndentWrappedFunctionNames: false
 AlignEscapedNewlines: Left
 # 允许宏内保持结构
 AllowShortBlocksOnASingleLine: Never
-# 避免宏被自动压缩
-AllowShortLambdasOnASingleLine: None
 # 保持宏展开结构
 KeepEmptyLinesAtTheStartOfBlocks: false
 
