@@ -10,8 +10,7 @@ struct AVFormatContext;
 struct AVPacket;
 struct AVCodecParameters;
 
-class Demux
-{
+class Demux {
 public:
     Demux();
     virtual ~Demux();
@@ -29,9 +28,9 @@ public:
 
 protected:
     AVFormatContext* m_avContext{nullptr};
-    int              m_aStream{0};
-    int              m_vStream{0};
-    int              m_totalMs{0};
+    int m_aStream{0};
+    int m_vStream{0};
+    int m_totalMs{0};
 
     std::mutex m_mutex;
 };
