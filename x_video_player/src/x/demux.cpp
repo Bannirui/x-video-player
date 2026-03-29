@@ -21,6 +21,7 @@ Demux::Demux() {
     static std::mutex s_mutex;
     s_mutex.lock();
     if (!s_initialized) {
+        // 初始化网络库
         avformat_network_init();
         s_initialized = true;
     }
@@ -31,17 +32,20 @@ Demux::~Demux() {}
 
 bool Demux::Open(const std::string& url) {
     AVDictionary* opts = nullptr;
+    // 设置rtsp流用tcp协议打开
     av_dict_set(&opts, "rtsp_transport", "tcp", 0);
+    // 网络延时时间
     av_dict_set(&opts, "max_delay", "500", 0);
 
     m_mutex.lock();
     int ret = avformat_open_input(&m_avContext, url.c_str(),
-                                  0,     // select codec automatically
-                                  &opts  // options, like rtsp delay duration
+                                  0,     // 自动选择解封器
+                                  &opts  // 参数设置 比如rtsp的延时时间
     );
-    if (ret != 0) {
+    if (ret != 0) { // 失败
         m_mutex.unlock();
         char buf[1024] = {0};
+        // 拿到失败原因
         av_strerror(ret, buf, sizeof(buf) - 1);
         XLOG_INFO("open {} failed, err: {}", url, buf);
         return false;
