@@ -52,7 +52,7 @@ bool Demux::Open(const std::string& url) {
     }
     XLOG_INFO("open {} success", url);
     ret = avformat_find_stream_info(m_avContext, nullptr);
-    // ms
+    // AV_TIME_BASE表示1秒钟有多少个单位 1s有1000个就是把时间单位转换成ms
     m_totalMs = m_avContext->duration / (AV_TIME_BASE / 1000);
     XLOG_INFO("total {}ms", m_totalMs);
     // mp4 info
