@@ -16,6 +16,17 @@ static double r2d(AVRational r) {
     return r.den == 0 ? 0 : (double)r.num / (double)r.den;
 }
 
+/**
+ * 根据错误码拿到失败原因
+ * @param errNum ffmpeg的错误码
+ */
+static void printErrMsg(int errNum) {
+    char buf[1024] = {0};
+    // 拿到失败原因
+    av_strerror(errNum, buf, sizeof(buf) - 1);
+    XLOG_INFO("err: {}", buf);
+}
+
 Demux::Demux() {
     static bool s_initialized = false;
     static std::mutex s_mutex;
@@ -38,16 +49,15 @@ bool Demux::Open(const std::string& url) {
     av_dict_set(&opts, "max_delay", "500", 0);
 
     m_mutex.lock();
+    // 解封装
     int ret = avformat_open_input(&m_avContext, url.c_str(),
-                                  0,     // 自动选择解封器
-                                  &opts  // 参数设置 比如rtsp的延时时间
+                                  nullptr,  // 自动选择解封器
+                                  &opts     // 参数设置 比如rtsp的延时时间
     );
-    if (ret != 0) { // 失败
+    if (ret != 0) {  // 失败
         m_mutex.unlock();
-        char buf[1024] = {0};
-        // 拿到失败原因
-        av_strerror(ret, buf, sizeof(buf) - 1);
-        XLOG_INFO("open {} failed, err: {}", url, buf);
+        XLOG_INFO("open {} failed", url);
+        printErrMsg(ret);
         return false;
     }
     XLOG_INFO("open {} success", url);
