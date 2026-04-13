@@ -10,6 +10,7 @@ struct AVFormatContext;
 struct AVPacket;
 struct AVCodecParameters;
 
+// 负责音视频解封装 打开/读
 class Demux {
 public:
     Demux();
@@ -26,7 +27,10 @@ public:
      */
     virtual AVPacket* Read();
 
-    // audio/video parameter, memory need be freed, call avcodec_parameters_free
+    /**
+     * audio/video parameter
+     * @return memory need be freed, call {@see avcodec_parameters_free}
+     */
     AVCodecParameters* CopyAPara();
     AVCodecParameters* CopyVPara();
 
