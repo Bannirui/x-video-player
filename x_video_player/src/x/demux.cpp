@@ -62,10 +62,11 @@ bool Demux::Open(const std::string& url) {
     }
     XLOG_INFO("open {} success", url);
     ret = avformat_find_stream_info(m_avContext, nullptr);
-    // AV_TIME_BASE表示1秒钟有多少个单位 1s有1000个就是把时间单位转换成ms
+    // 总时长 有这么多个duration 1个duration是1/1'000'000秒
+    // AV_TIME_BASE表示1秒钟有多少个单位 1s有1'000'000个 转换成ms就是把1s有1'000个单位
     m_totalMs = m_avContext->duration / (AV_TIME_BASE / 1000);
     XLOG_INFO("total {}ms", m_totalMs);
-    // mp4 info
+    // 打印视频流详细信息
     av_dump_format(m_avContext, 0, url.c_str(), 0);
 
     // audio/video stream
