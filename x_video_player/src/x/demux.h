@@ -19,7 +19,11 @@ public:
      * @param url media file path
      */
     virtual bool Open(const std::string& url);
-    // read frame, caller free AVPacket object, av_paket_free
+
+    /**
+     * 读一帧
+     * @return 调用方负责对内存的释放 {@see av_packet_free}
+     */
     virtual AVPacket* Read();
 
     // audio/video parameter, memory need be freed, call avcodec_parameters_free

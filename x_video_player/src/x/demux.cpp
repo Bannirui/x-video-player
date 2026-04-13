@@ -96,6 +96,7 @@ AVPacket* Demux::Read() {
         m_mutex.unlock();
         return nullptr;
     }
+    // 内存的申请跟释放成套使用 av_packet_alloc跟av_packet_free
     AVPacket* pkt = av_packet_alloc();
     // pkt是输出参数 不能是nullptr
     int ret = av_read_frame(m_avContext, pkt);
@@ -104,11 +105,11 @@ AVPacket* Demux::Read() {
         av_packet_free(&pkt);
         return nullptr;
     }
-    // 时间格式转换 time_base->s->ms
-    // 播放时间
-    pkt->pts = pkt->pts * r2d(m_avContext->streams[pkt->stream_index]->time_base) / AV_TIME_BASE * 1000;
+    // 时间格式转换 s->ms 时间单位转换成ms方便同步
+    // 显示时间
+    pkt->pts = pkt->pts * r2d(m_avContext->streams[pkt->stream_index]->time_base) * 1000;
     // 解码时间
-    pkt->dts = pkt->dts * r2d(m_avContext->streams[pkt->stream_index]->time_base) / AV_TIME_BASE * 1000;
+    pkt->dts = pkt->dts * r2d(m_avContext->streams[pkt->stream_index]->time_base) * 1000;
     XLOG_INFO("pts:{}, dts:{}", pkt->pts, pkt->dts);
     m_mutex.unlock();
     return pkt;
