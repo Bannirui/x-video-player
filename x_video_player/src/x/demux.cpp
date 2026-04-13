@@ -97,8 +97,9 @@ AVPacket* Demux::Read() {
         return nullptr;
     }
     AVPacket* pkt = av_packet_alloc();
+    // pkt是输出参数 不能是nullptr
     int ret = av_read_frame(m_avContext, pkt);
-    if (ret < 0) {
+    if (ret < 0) { // 报错或者读到文件结尾ret都是小于0
         m_mutex.unlock();
         av_packet_free(&pkt);
         return nullptr;
