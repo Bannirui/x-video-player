@@ -71,9 +71,9 @@ bool Demux::Open(const std::string& url) {
 
     // 获取流下标
     m_vStream = av_find_best_stream(m_avContext, AVMEDIA_TYPE_VIDEO,
-        -1, // -1表示自动选择
-        -1, // -1表示none
-        nullptr, 0);
+                                    -1,  // -1表示自动选择
+                                    -1,  // -1表示none
+                                    nullptr, 0);
     AVStream* vStream = m_avContext->streams[m_vStream];
     XLOG_INFO("video, stream:{0}, width:{1}, height:{2}, fps:{3}, format:{4}, codec:{5}", vStream->id,
               vStream->codecpar->width, vStream->codecpar->height, r2d(vStream->avg_frame_rate),
@@ -99,14 +99,16 @@ AVPacket* Demux::Read() {
     AVPacket* pkt = av_packet_alloc();
     // pkt是输出参数 不能是nullptr
     int ret = av_read_frame(m_avContext, pkt);
-    if (ret < 0) { // 报错或者读到文件结尾ret都是小于0
+    if (ret < 0) {  // 报错或者读到文件结尾ret都是小于0
         m_mutex.unlock();
         av_packet_free(&pkt);
         return nullptr;
     }
-    // pts->ms
-    pkt->pts = pkt->pts * (1000 * (r2d(m_avContext->streams[pkt->stream_index]->time_base)));
-    pkt->dts = pkt->dts * (1000 * (r2d(m_avContext->streams[pkt->stream_index]->time_base)));
+    // 时间格式转换 time_base->s->ms
+    // 播放时间
+    pkt->pts = pkt->pts * r2d(m_avContext->streams[pkt->stream_index]->time_base) / AV_TIME_BASE * 1000;
+    // 解码时间
+    pkt->dts = pkt->dts * r2d(m_avContext->streams[pkt->stream_index]->time_base) / AV_TIME_BASE * 1000;
     XLOG_INFO("pts:{}, dts:{}", pkt->pts, pkt->dts);
     m_mutex.unlock();
     return pkt;
