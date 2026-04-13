@@ -69,20 +69,22 @@ bool Demux::Open(const std::string& url) {
     // 打印视频流详细信息
     av_dump_format(m_avContext, 0, url.c_str(), 0);
 
-    // audio/video stream
-    m_aStream = av_find_best_stream(m_avContext, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
-    m_vStream = av_find_best_stream(m_avContext, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
-    XLOG_INFO("audio index={}, video index={}", m_aStream, m_vStream);
-
-    AVStream* aStream = m_avContext->streams[m_aStream];
-    XLOG_INFO("audio, stream:{0}, sample rate:{1}, channels:{2}, fps:{3}, format:{4}, codec:{5}", aStream->id,
-              aStream->codecpar->sample_rate, aStream->codecpar->channels, r2d(aStream->avg_frame_rate),
-              aStream->codecpar->format, static_cast<int>(aStream->codecpar->codec_id));
-
+    // 获取流下标
+    m_vStream = av_find_best_stream(m_avContext, AVMEDIA_TYPE_VIDEO,
+        -1, // -1表示自动选择
+        -1, // -1表示none
+        nullptr, 0);
     AVStream* vStream = m_avContext->streams[m_vStream];
     XLOG_INFO("video, stream:{0}, width:{1}, height:{2}, fps:{3}, format:{4}, codec:{5}", vStream->id,
               vStream->codecpar->width, vStream->codecpar->height, r2d(vStream->avg_frame_rate),
               vStream->codecpar->format, static_cast<int>(vStream->codecpar->codec_id));
+    XLOG_INFO("audio index={}, video index={}", m_aStream, m_vStream);
+
+    m_aStream = av_find_best_stream(m_avContext, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
+    AVStream* aStream = m_avContext->streams[m_aStream];
+    XLOG_INFO("audio, stream:{0}, sample rate:{1}, channels:{2}, fps:{3}, format:{4}, codec:{5}", aStream->id,
+              aStream->codecpar->sample_rate, aStream->codecpar->channels, r2d(aStream->avg_frame_rate),
+              aStream->codecpar->format, static_cast<int>(aStream->codecpar->codec_id));
 
     m_mutex.unlock();
     return true;
