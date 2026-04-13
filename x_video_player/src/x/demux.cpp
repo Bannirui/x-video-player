@@ -12,6 +12,7 @@ extern "C" {
 #include <libavformat/avformat.h>
 }
 
+// ffmpeg怕精度丢失 就直接给我们分子分母 本质就是一个浮点数的表示形式
 static double r2d(AVRational r) {
     return r.den == 0 ? 0 : (double)r.num / (double)r.den;
 }
@@ -62,9 +63,8 @@ bool Demux::Open(const std::string& url) {
     }
     XLOG_INFO("open {} success", url);
     ret = avformat_find_stream_info(m_avContext, nullptr);
-    // 总时长 有这么多个duration 1个duration是1/1'000'000秒
-    // AV_TIME_BASE表示1秒钟有多少个单位 1s有1'000'000个 转换成ms就是把1s有1'000个单位
-    m_totalMs = m_avContext->duration / (AV_TIME_BASE / 1000);
+    // 总时长 有这么多个duration 1个duration是1/1'000'000秒 也就是微妙 除以AV_TIME_BASE换算成秒
+    m_totalMs = m_avContext->duration / AV_TIME_BASE * 1000;
     XLOG_INFO("total {}ms", m_totalMs);
     // 打印视频流详细信息
     av_dump_format(m_avContext, 0, url.c_str(), 0);
