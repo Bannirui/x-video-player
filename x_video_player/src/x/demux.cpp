@@ -12,7 +12,10 @@ extern "C" {
 #include <libavformat/avformat.h>
 }
 
-// ffmpeg怕精度丢失 就直接给我们分子分母 本质就是一个浮点数的表示形式
+/**
+ * @param r ffmpeg怕精度丢失 就直接给我们分子分母 本质就是一个浮点数的表示形式
+ * @return 单位s
+ */
 static double r2d(AVRational r) {
     return r.den == 0 ? 0 : (double)r.num / (double)r.den;
 }
@@ -98,10 +101,11 @@ AVPacket* Demux::Read() {
     }
     // 内存的申请跟释放成套使用 av_packet_alloc跟av_packet_free
     AVPacket* pkt = av_packet_alloc();
-    // pkt是输出参数 不能是nullptr
+    // pkt是输出参数 不能是nullptr 读取一帧并分配空间
     int ret = av_read_frame(m_ic, pkt);
     if (ret < 0) {  // 报错或者读到文件结尾ret都是小于0
         m_mutex.unlock();
+        // 防止内存泄露
         av_packet_free(&pkt);
         return nullptr;
     }
