@@ -31,35 +31,36 @@ static void printErrMsg(int errNum) {
     XLOG_INFO("err: {}", buf);
 }
 
+// 定义自定义删除器
+void avcodec_parameters_deleter(AVCodecParameters* ptr) {
+    avcodec_parameters_free(&ptr);
+}
+
 Demux::Demux() {
-    static bool s_initialized = false;
-    static std::mutex s_mutex;
-    s_mutex.lock();
-    if (!s_initialized) {
+    // 确保只初始化一次
+    static std::once_flag s_flag;
+    std::call_once(s_flag, []() -> void {
         // 初始化网络库
         avformat_network_init();
-        s_initialized = true;
-    }
-    s_mutex.unlock();
+    });
 }
 
 Demux::~Demux() {}
 
 bool Demux::Open(const std::string& url) {
+    // 保证线程安全
+    std::lock_guard<std::mutex> lock(m_mutex);
     AVDictionary* opts = nullptr;
     // 设置rtsp流用tcp协议打开
     av_dict_set(&opts, "rtsp_transport", "tcp", 0);
     // 网络延时时间
     av_dict_set(&opts, "max_delay", "500", 0);
-
-    m_mutex.lock();
-    // 解封装
+    // 打开输入流 解封装
     int ret = avformat_open_input(&m_ic, url.c_str(),
                                   nullptr,  // 自动选择解封器
                                   &opts     // 参数设置 比如rtsp的延时时间
     );
     if (ret != 0) {  // 失败
-        m_mutex.unlock();
         XLOG_INFO("open {} failed", url);
         printErrMsg(ret);
         return false;
@@ -77,26 +78,33 @@ bool Demux::Open(const std::string& url) {
                                     -1,  // -1表示自动选择
                                     -1,  // -1表示none
                                     nullptr, 0);
+    if (m_vStream < 0) {  // 如果未找到视频流
+        XLOG_INFO("Failed to find video stream in {}", url);
+        return false;
+    }
     AVStream* vStream = m_ic->streams[m_vStream];
     XLOG_INFO("video, stream:{0}, width:{1}, height:{2}, fps:{3}, format:{4}, codec:{5}", vStream->id,
               vStream->codecpar->width, vStream->codecpar->height, r2d(vStream->avg_frame_rate),
               vStream->codecpar->format, static_cast<int>(vStream->codecpar->codec_id));
-    XLOG_INFO("audio index={}, video index={}", m_aStream, m_vStream);
 
     m_aStream = av_find_best_stream(m_ic, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
+    if (m_aStream < 0) {  // 如果未找到音频流
+        XLOG_INFO("Failed to find audio stream in {}", url);
+        return false;
+    }
     AVStream* aStream = m_ic->streams[m_aStream];
     XLOG_INFO("audio, stream:{0}, sample rate:{1}, channels:{2}, fps:{3}, format:{4}, codec:{5}", aStream->id,
               aStream->codecpar->sample_rate, aStream->codecpar->channels, r2d(aStream->avg_frame_rate),
               aStream->codecpar->format, static_cast<int>(aStream->codecpar->codec_id));
 
-    m_mutex.unlock();
+    XLOG_INFO("audio index={}, video index={}", m_aStream, m_vStream);
     return true;
 }
 
 AVPacket* Demux::Read() {
-    m_mutex.lock();
+    // 保证线程安全
+    std::lock_guard<std::mutex> lock(m_mutex);
     if (!m_ic) {
-        m_mutex.unlock();
         return nullptr;
     }
     // 内存的申请跟释放成套使用 av_packet_alloc跟av_packet_free
@@ -104,7 +112,6 @@ AVPacket* Demux::Read() {
     // pkt是输出参数 不能是nullptr 读取一帧并分配空间
     int ret = av_read_frame(m_ic, pkt);
     if (ret < 0) {  // 报错或者读到文件结尾ret都是小于0
-        m_mutex.unlock();
         // 防止内存泄露
         av_packet_free(&pkt);
         return nullptr;
@@ -115,30 +122,24 @@ AVPacket* Demux::Read() {
     // 解码时间
     pkt->dts = pkt->dts * r2d(m_ic->streams[pkt->stream_index]->time_base) * 1000;
     XLOG_INFO("pts:{}, dts:{}", pkt->pts, pkt->dts);
-    m_mutex.unlock();
     return pkt;
 }
 
-AVCodecParameters* Demux::CopyAPara() {
-    m_mutex.lock();
-    if (!m_ic) {
-        m_mutex.unlock();
-        return nullptr;
+Demux::AVCodecParametersPtr Demux::copyPara(int streamIndex) {
+    // 自动加锁并解锁
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (!m_ic || streamIndex < 0 || streamIndex >= static_cast<int>(m_ic->nb_streams)) {
+        // 返回空指针并指定自定义删除器
+        return {nullptr, avcodec_parameters_deleter};
     }
-    AVCodecParameters* ret = avcodec_parameters_alloc();
-    avcodec_parameters_copy(ret, m_ic->streams[m_aStream]->codecpar);
-    m_mutex.unlock();
-    return ret;
-}
-
-AVCodecParameters* Demux::CopyVPara() {
-    m_mutex.lock();
-    if (!m_ic) {
-        m_mutex.unlock();
-        return nullptr;
+    // 分配内存
+    AVCodecParameters* raw = avcodec_parameters_alloc();
+    if (!raw) {
+        // 分配失败 返回空指针
+        return {nullptr, avcodec_parameters_deleter};
     }
-    AVCodecParameters* ret = avcodec_parameters_alloc();
-    avcodec_parameters_copy(ret, m_ic->streams[m_vStream]->codecpar);
-    m_mutex.unlock();
-    return ret;
+    // 拷贝流的参数
+    avcodec_parameters_copy(raw, m_ic->streams[streamIndex]->codecpar);
+    // 返回一个智能指针 自动管理内存
+    return {raw, avcodec_parameters_deleter};
 }

@@ -6,13 +6,23 @@
 
 #include "pch.h"
 
+extern "C" {
+#include <libavcodec/avcodec.h>
+}
+
 struct AVFormatContext;
 struct AVPacket;
 struct AVCodecParameters;
 
+// 声明自定义删除器
+void avcodec_parameters_deleter(AVCodecParameters* ptr);
+
 // 负责音视频解封装 打开/读
 class Demux {
 public:
+    // 使用自定义删除器的智能指针类型
+    using AVCodecParametersPtr = std::unique_ptr<AVCodecParameters, decltype(&avcodec_parameters_deleter)>;
+
     Demux();
     virtual ~Demux();
 
@@ -28,16 +38,26 @@ public:
     virtual AVPacket* Read();
 
     /**
-     * audio/video parameter
-     * @return memory need be freed, call {@see avcodec_parameters_free}
+     * 获取音频参数
      */
-    AVCodecParameters* CopyAPara();
-    AVCodecParameters* CopyVPara();
+    AVCodecParametersPtr CopyAPara() {
+        return copyPara(m_aStream);
+    }
+
+    /**
+     * 获取视频参数
+     */
+    AVCodecParametersPtr CopyVPara() {
+        return copyPara(m_vStream);
+    }
+
+private:
+    AVCodecParametersPtr copyPara(int streamIndex);
 
 protected:
     AVFormatContext* m_ic{nullptr};
-    int m_aStream{0};
-    int m_vStream{0};
+    int m_aStream{-1};
+    int m_vStream{-1};
     int m_totalMs{0};
 
     std::mutex m_mutex;
