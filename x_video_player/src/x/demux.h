@@ -35,7 +35,7 @@ public:
     AVCodecParameters* CopyVPara();
 
 protected:
-    AVFormatContext* m_avContext{nullptr};
+    AVFormatContext* m_ic{nullptr};
     int m_aStream{0};
     int m_vStream{0};
     int m_totalMs{0};

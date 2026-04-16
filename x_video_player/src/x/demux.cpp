@@ -51,7 +51,7 @@ bool Demux::Open(const std::string& url) {
 
     m_mutex.lock();
     // 解封装
-    int ret = avformat_open_input(&m_avContext, url.c_str(),
+    int ret = avformat_open_input(&m_ic, url.c_str(),
                                   nullptr,  // 自动选择解封器
                                   &opts     // 参数设置 比如rtsp的延时时间
     );
@@ -62,26 +62,26 @@ bool Demux::Open(const std::string& url) {
         return false;
     }
     XLOG_INFO("open {} success", url);
-    ret = avformat_find_stream_info(m_avContext, nullptr);
+    ret = avformat_find_stream_info(m_ic, nullptr);
     // 总时长 有这么多个duration 1个duration是1/1'000'000秒 也就是微妙 除以AV_TIME_BASE换算成秒
-    m_totalMs = m_avContext->duration / AV_TIME_BASE * 1000;
+    m_totalMs = m_ic->duration / AV_TIME_BASE * 1000;
     XLOG_INFO("total {}ms", m_totalMs);
     // 打印视频流详细信息
-    av_dump_format(m_avContext, 0, url.c_str(), 0);
+    av_dump_format(m_ic, 0, url.c_str(), 0);
 
     // 获取流下标
-    m_vStream = av_find_best_stream(m_avContext, AVMEDIA_TYPE_VIDEO,
+    m_vStream = av_find_best_stream(m_ic, AVMEDIA_TYPE_VIDEO,
                                     -1,  // -1表示自动选择
                                     -1,  // -1表示none
                                     nullptr, 0);
-    AVStream* vStream = m_avContext->streams[m_vStream];
+    AVStream* vStream = m_ic->streams[m_vStream];
     XLOG_INFO("video, stream:{0}, width:{1}, height:{2}, fps:{3}, format:{4}, codec:{5}", vStream->id,
               vStream->codecpar->width, vStream->codecpar->height, r2d(vStream->avg_frame_rate),
               vStream->codecpar->format, static_cast<int>(vStream->codecpar->codec_id));
     XLOG_INFO("audio index={}, video index={}", m_aStream, m_vStream);
 
-    m_aStream = av_find_best_stream(m_avContext, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
-    AVStream* aStream = m_avContext->streams[m_aStream];
+    m_aStream = av_find_best_stream(m_ic, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
+    AVStream* aStream = m_ic->streams[m_aStream];
     XLOG_INFO("audio, stream:{0}, sample rate:{1}, channels:{2}, fps:{3}, format:{4}, codec:{5}", aStream->id,
               aStream->codecpar->sample_rate, aStream->codecpar->channels, r2d(aStream->avg_frame_rate),
               aStream->codecpar->format, static_cast<int>(aStream->codecpar->codec_id));
@@ -92,14 +92,14 @@ bool Demux::Open(const std::string& url) {
 
 AVPacket* Demux::Read() {
     m_mutex.lock();
-    if (!m_avContext) {
+    if (!m_ic) {
         m_mutex.unlock();
         return nullptr;
     }
     // 内存的申请跟释放成套使用 av_packet_alloc跟av_packet_free
     AVPacket* pkt = av_packet_alloc();
     // pkt是输出参数 不能是nullptr
-    int ret = av_read_frame(m_avContext, pkt);
+    int ret = av_read_frame(m_ic, pkt);
     if (ret < 0) {  // 报错或者读到文件结尾ret都是小于0
         m_mutex.unlock();
         av_packet_free(&pkt);
@@ -107,9 +107,9 @@ AVPacket* Demux::Read() {
     }
     // 时间格式转换 s->ms 时间单位转换成ms方便同步
     // 显示时间
-    pkt->pts = pkt->pts * r2d(m_avContext->streams[pkt->stream_index]->time_base) * 1000;
+    pkt->pts = pkt->pts * r2d(m_ic->streams[pkt->stream_index]->time_base) * 1000;
     // 解码时间
-    pkt->dts = pkt->dts * r2d(m_avContext->streams[pkt->stream_index]->time_base) * 1000;
+    pkt->dts = pkt->dts * r2d(m_ic->streams[pkt->stream_index]->time_base) * 1000;
     XLOG_INFO("pts:{}, dts:{}", pkt->pts, pkt->dts);
     m_mutex.unlock();
     return pkt;
@@ -117,24 +117,24 @@ AVPacket* Demux::Read() {
 
 AVCodecParameters* Demux::CopyAPara() {
     m_mutex.lock();
-    if (!m_avContext) {
+    if (!m_ic) {
         m_mutex.unlock();
         return nullptr;
     }
     AVCodecParameters* ret = avcodec_parameters_alloc();
-    avcodec_parameters_copy(ret, m_avContext->streams[m_aStream]->codecpar);
+    avcodec_parameters_copy(ret, m_ic->streams[m_aStream]->codecpar);
     m_mutex.unlock();
     return ret;
 }
 
 AVCodecParameters* Demux::CopyVPara() {
     m_mutex.lock();
-    if (!m_avContext) {
+    if (!m_ic) {
         m_mutex.unlock();
         return nullptr;
     }
     AVCodecParameters* ret = avcodec_parameters_alloc();
-    avcodec_parameters_copy(ret, m_avContext->streams[m_vStream]->codecpar);
+    avcodec_parameters_copy(ret, m_ic->streams[m_vStream]->codecpar);
     m_mutex.unlock();
     return ret;
 }
