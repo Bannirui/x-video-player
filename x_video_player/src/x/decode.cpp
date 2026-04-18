@@ -19,6 +19,7 @@ Decode::~Decode() {}
 
 bool Decode::Open(AVCodecParametersPtr para) {
     if (!para) return false;
+    this->Close();
     // 打开解码器 找到解码器 参数里面的id
     const AVCodec* avCodec = avcodec_find_decoder(para->codec_id);
     if (!avCodec) {
@@ -26,18 +27,35 @@ bool Decode::Open(AVCodecParametersPtr para) {
         return false;
     }
     XLOG_INFO("find the AVCodec={}", static_cast<int>(para->codec_id));
-    AVCodecContext* vc = avcodec_alloc_context3(avCodec);
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_codec = avcodec_alloc_context3(avCodec);
     // 配置解码器上下文
-    avcodec_parameters_to_context(vc, para.get());
+    avcodec_parameters_to_context(m_codec, para.get());
     // 几个线程解码
-    vc->thread_count = 8;
+    m_codec->thread_count = 8;
     // 打开解码器上下文
-    int ret = avcodec_open2(vc, nullptr, nullptr);
+    int ret = avcodec_open2(m_codec, nullptr, nullptr);
     if (ret != 0) {
-        avcodec_free_context(&vc);
+        avcodec_free_context(&m_codec);
         LogAvErr(ret, "Could not open codec");
         return false;
     }
     XLOG_INFO("avcodec_open2 success");
     return true;
+}
+
+void Decode::Clear() {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (m_codec) {
+        // 清理解码缓冲
+        avcodec_flush_buffers(m_codec);
+    }
+}
+
+void Decode::Close() {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (m_codec) {
+        avcodec_close(m_codec);
+        avcodec_free_context(&m_codec);
+    }
 }

@@ -4,8 +4,10 @@
 #pragma once
 
 #include "ffmpeg_raii.h"
+#include "pch.h"
 
 struct AVCodecParameters;
+struct AVCodecContext;
 
 class Decode {
 public:
@@ -18,7 +20,13 @@ public:
      */
     bool Open(AVCodecParametersPtr para);
 
+    void Clear();
+    void Close();
+
 private:
     enum class TYPE { AUDIO, VIDEO };
     TYPE m_type{TYPE::AUDIO};
+
+    AVCodecContext* m_codec{nullptr};
+    std::mutex m_mutex;
 };
