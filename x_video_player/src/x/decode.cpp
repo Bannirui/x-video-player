@@ -44,6 +44,26 @@ bool Decode::Open(AVCodecParametersPtr para) {
     return true;
 }
 
+bool Decode::Send(AVPacket* pkt) {
+    if (!pkt || pkt->size <= 0 || !pkt->data) return false;
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (!m_codec) return false;
+    int ret = avcodec_send_packet(m_codec, pkt);
+    av_packet_free(&pkt);
+    return ret == 0;
+}
+
+AVFrame* Decode::Recv() {
+    if (!m_codec) return nullptr;
+    std::lock_guard<std::mutex> lock(m_mutex);
+    AVFrame* frame = av_frame_alloc();
+    if (avcodec_receive_frame(m_codec, frame) != 0) {
+        av_frame_free(&frame);
+        return nullptr;
+    }
+    return frame;
+}
+
 void Decode::Clear() {
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_codec) {
