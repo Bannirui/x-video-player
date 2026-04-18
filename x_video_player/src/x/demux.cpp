@@ -120,6 +120,17 @@ AVPacket* Demux::Read() {
     return pkt;
 }
 
+bool Demux::Seek(double pos) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (!m_ic) return false;
+    // 清理读取缓冲 seek到新的位置 防止之前有传冲
+    avformat_flush(m_ic);
+    long long seekPos = 0;
+    seekPos = m_ic->streams[m_vStream]->duration * pos;
+    int ret = av_seek_frame(m_ic, m_vStream, seekPos, AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG_FRAME);
+    return ret >= 0;
+}
+
 Demux::AVCodecParametersPtr Demux::copyPara(int streamIndex) {
     // 自动加锁并解锁
     std::lock_guard<std::mutex> lock(m_mutex);

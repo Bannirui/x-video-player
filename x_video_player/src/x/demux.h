@@ -53,6 +53,11 @@ public:
         return copyPara(m_vStream);
     }
 
+    /**
+     * @param pos 位置 [0.0, 1.0]
+     */
+    virtual bool Seek(double pos);
+
 private:
     AVCodecParametersPtr copyPara(int streamIndex);
 
