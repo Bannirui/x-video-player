@@ -4,6 +4,7 @@
 
 #include "x/demux.h"
 
+#include "ffmpeg_utils.h"
 #include "x/x_log.h"
 
 extern "C" {
@@ -18,17 +19,6 @@ extern "C" {
  */
 static double r2d(AVRational r) {
     return r.den == 0 ? 0 : (double)r.num / (double)r.den;
-}
-
-/**
- * 根据错误码拿到失败原因
- * @param errNum ffmpeg的错误码
- */
-static void printErrMsg(int errNum) {
-    char buf[1024] = {0};
-    // 拿到失败原因
-    av_strerror(errNum, buf, sizeof(buf) - 1);
-    XLOG_INFO("err: {}", buf);
 }
 
 Demux::Demux() {
@@ -58,7 +48,7 @@ bool Demux::Open(const std::string& url) {
     );
     if (ret != 0) {  // 失败
         XLOG_INFO("open {} failed", url);
-        printErrMsg(ret);
+        LogAvErr(ret, "open failed");
         return false;
     }
     XLOG_INFO("open {} success", url);
@@ -146,7 +136,7 @@ void Demux::Close() {
     m_totalMs = 0;
 }
 
-Demux::AVCodecParametersPtr Demux::copyPara(int streamIndex) {
+AVCodecParametersPtr Demux::copyPara(int streamIndex) {
     // 自动加锁并解锁
     std::lock_guard<std::mutex> lock(m_mutex);
     if (!m_ic || streamIndex < 0 || streamIndex >= static_cast<int>(m_ic->nb_streams)) {
@@ -154,13 +144,15 @@ Demux::AVCodecParametersPtr Demux::copyPara(int streamIndex) {
         return {nullptr, avcodec_parameters_deleter};
     }
     // 分配内存
-    AVCodecParameters* raw = avcodec_parameters_alloc();
-    if (!raw) {
+    auto ptr = AVCodecParametersPtr(avcodec_parameters_alloc(), avcodec_parameters_deleter);
+    if (!ptr) {
         // 分配失败 返回空指针
-        return {nullptr, avcodec_parameters_deleter};
+        return ptr;
     }
     // 拷贝流的参数
-    avcodec_parameters_copy(raw, m_ic->streams[streamIndex]->codecpar);
+    if (avcodec_parameters_copy(ptr.get(), m_ic->streams[streamIndex]->codecpar) < 0) {
+        return {nullptr, avcodec_parameters_deleter};
+    }
     // 返回一个智能指针 自动管理内存
-    return {raw, avcodec_parameters_deleter};
+    return ptr;
 }

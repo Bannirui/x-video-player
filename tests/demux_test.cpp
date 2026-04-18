@@ -19,12 +19,12 @@ int main() {
     std::string path = "asset/Python.mp4";
     XLOG_INFO("open ret: {0}", demux.Open(path));
 
-    Demux::AVCodecParametersPtr aParameter = demux.CopyAPara();
+    auto aParameter = demux.CopyAPara();
     if (aParameter) {
         XLOG_INFO("audio parameter: {}", static_cast<int>(aParameter->codec_id));
     }
 
-    Demux::AVCodecParametersPtr vParameter = demux.CopyVPara();
+    auto vParameter = demux.CopyVPara();
     if (vParameter) {
         XLOG_INFO("video parameter: {}", static_cast<int>(vParameter->codec_id));
     }
