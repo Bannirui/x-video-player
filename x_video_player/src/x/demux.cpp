@@ -31,11 +31,6 @@ static void printErrMsg(int errNum) {
     XLOG_INFO("err: {}", buf);
 }
 
-// 定义自定义删除器
-void avcodec_parameters_deleter(AVCodecParameters* ptr) {
-    avcodec_parameters_free(&ptr);
-}
-
 Demux::Demux() {
     // 确保只初始化一次
     static std::once_flag s_flag;

@@ -14,14 +14,16 @@ struct AVFormatContext;
 struct AVPacket;
 struct AVCodecParameters;
 
-// 声明自定义删除器
-void avcodec_parameters_deleter(AVCodecParameters* ptr);
+// 自定义删除器
+inline auto avcodec_parameters_deleter = [](AVCodecParameters* p) -> void {
+    if (p) avcodec_parameters_free(&p);
+};
 
 // 负责音视频解封装 打开/读
 class Demux {
 public:
     // 使用自定义删除器的智能指针类型
-    using AVCodecParametersPtr = std::unique_ptr<AVCodecParameters, decltype(&avcodec_parameters_deleter)>;
+    using AVCodecParametersPtr = std::unique_ptr<AVCodecParameters, decltype(avcodec_parameters_deleter)>;
 
     Demux();
     virtual ~Demux();
