@@ -43,20 +43,26 @@ public:
      * 获取音频参数
      */
     AVCodecParametersPtr CopyAPara() {
-        return copyPara(m_aStream);
+        return this->copyPara(m_aStream);
     }
 
     /**
      * 获取视频参数
      */
     AVCodecParametersPtr CopyVPara() {
-        return copyPara(m_vStream);
+        return this->copyPara(m_vStream);
     }
 
     /**
      * @param pos 位置 [0.0, 1.0]
      */
     virtual bool Seek(double pos);
+
+    /**
+     * 清空读取缓存
+     */
+    void Clear();
+    void Close();
 
 private:
     AVCodecParametersPtr copyPara(int streamIndex);

@@ -35,6 +35,8 @@ int main() {
         AVPacket* pkt = demux.Read();
         if (!pkt) break;
     }
+    demux.Clear();
+    demux.Close();
 
     return 0;
 }

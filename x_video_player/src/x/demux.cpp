@@ -43,6 +43,7 @@ Demux::Demux() {
 Demux::~Demux() {}
 
 bool Demux::Open(const std::string& url) {
+    this->Close();
     // 保证线程安全
     std::lock_guard<std::mutex> lock(m_mutex);
     AVDictionary* opts = nullptr;
@@ -129,6 +130,20 @@ bool Demux::Seek(double pos) {
     seekPos = m_ic->streams[m_vStream]->duration * pos;
     int ret = av_seek_frame(m_ic, m_vStream, seekPos, AVSEEK_FLAG_BACKWARD | AVSEEK_FLAG_FRAME);
     return ret >= 0;
+}
+
+void Demux::Clear() {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (!m_ic) return;
+    avformat_flush(m_ic);
+}
+
+void Demux::Close() {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (!m_ic) return;
+    avformat_close_input(&m_ic);
+    // 清空成员
+    m_totalMs = 0;
 }
 
 Demux::AVCodecParametersPtr Demux::copyPara(int streamIndex) {
