@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "av_type.h"
 #include "ffmpeg_raii.h"
 #include "pch.h"
 
@@ -56,6 +57,7 @@ public:
      */
     void Clear();
     void Close();
+    AV_TYPE getAVType(AVPacket* pkt) const;
 
 private:
     AVCodecParametersPtr copyPara(int streamIndex);

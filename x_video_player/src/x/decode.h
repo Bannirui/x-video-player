@@ -36,9 +36,6 @@ public:
     void Close();
 
 private:
-    enum class TYPE { AUDIO, VIDEO };
-    TYPE m_type{TYPE::AUDIO};
-
     AVCodecContext* m_codec{nullptr};
     std::mutex m_mutex;
 };

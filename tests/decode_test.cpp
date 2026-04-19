@@ -17,15 +17,17 @@ int main() {
     XLog::Init();
 
     Demux demux;
-    std::string path = "asset/Python.mp4";
-    XLOG_INFO("open ret: {0}", demux.Open(path));
+    const std::string path = "asset/Python.mp4";
+    if (!demux.Open(path)) {
+        XLOG_ERROR("failed to open {}", path);
+        return -1;
+    }
 
     auto aParameter = demux.CopyAPara();
+    auto vParameter = demux.CopyVPara();
     if (aParameter) {
         XLOG_INFO("audio parameter: {}", static_cast<int>(aParameter->codec_id));
     }
-
-    auto vParameter = demux.CopyVPara();
     if (vParameter) {
         XLOG_INFO("video parameter: {}", static_cast<int>(vParameter->codec_id));
     }
@@ -33,19 +35,45 @@ int main() {
     XLOG_INFO("seek={}", demux.Seek(0.5));
 
     Decode aDecode;
-    XLOG_INFO("a decode open={}", aDecode.Open(std::move(aParameter)));
-    aDecode.Clear();
-    aDecode.Close();
-
     Decode vDecode;
-    XLOG_INFO("v decode open={}", vDecode.Open(std::move(vParameter)));
-    vDecode.Clear();
-    vDecode.Close();
+    if (aParameter && aDecode.Open(std::move(aParameter))) {
+        XLOG_INFO("a decode open={}", aDecode.Open(std::move(aParameter)));
+    }
+    if (vParameter && vDecode.Open(std::move(vParameter))) {
+        XLOG_INFO("v decode open={}", vDecode.Open(std::move(vParameter)));
+    }
 
-    // for (;;) {
-    //     AVPacket* pkt = demux.Read();
-    //     if (!pkt) break;
-    // }
+    for (;;) {
+        AVPacket* pkt = demux.Read();
+        if (!pkt) break;
+        switch (demux.getAVType(pkt)) {
+            case AV_TYPE::kAUDIO: {
+                if (aDecode.Send(pkt)) {
+                    while (true) {
+                        AVFrame* frame = aDecode.Recv();
+                        if (!frame) break;
+                        XLOG_INFO("audio channels: {}", frame->channels);
+                        av_frame_free(&frame);
+                    }
+                }
+                break;
+            }
+            case AV_TYPE::kVIDEO: {
+                if (vDecode.Send(pkt)) {
+                    while (true) {
+                        AVFrame* frame = aDecode.Recv();
+                        if (!frame) break;
+                        XLOG_INFO("video channels: {}", frame->channels);
+                        av_frame_free(&frame);
+                    }
+                }
+                break;
+            }
+            default:
+                XLOG_INFO("unknown type");
+                break;
+        }
+    }
     demux.Clear();
     demux.Close();
 

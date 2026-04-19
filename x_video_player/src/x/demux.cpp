@@ -136,6 +136,11 @@ void Demux::Close() {
     m_totalMs = 0;
 }
 
+AV_TYPE Demux::getAVType(AVPacket* pkt) const {
+    if (!pkt) return AV_TYPE::kUNKNOWN;
+    return pkt->stream_index == m_vStream ? AV_TYPE::kVIDEO : AV_TYPE::kAUDIO;
+}
+
 AVCodecParametersPtr Demux::copyPara(int streamIndex) {
     // 自动加锁并解锁
     std::lock_guard<std::mutex> lock(m_mutex);
